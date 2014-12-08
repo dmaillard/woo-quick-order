@@ -70,7 +70,7 @@ function wqo_product() {
   }else{
     $wqo_img_size=40;
   }
-  if(get_option('wqo_display_mini_cart')==1){  
+  if(get_option('wqo_display_mini_cart')==1){
   ?>
 
 <link rel='stylesheet'  href='<?php echo WQO_BASE_URL.'/css/template_'.get_option('wqo_cart_template').'.css'; ?>' type='text/css' />
@@ -81,7 +81,7 @@ function wqo_product() {
   <?php
     echo woocommerce_product_dropdown_categories( array(), 1, 0, '' );
     //die('okzzz');
-  ?>  
+  ?>
   <select name="wqo_front_order_by">
       <option value="date" <?php if ($_POST['wqo_front_order_by']=='date'):?> selected="selected"<?php endif;?>>Date</option>
       <option value="name" <?php if ($_POST['wqo_front_order_by']=='name'):?> selected="selected"<?php endif;?>>Name</option>
@@ -89,37 +89,37 @@ function wqo_product() {
   </select>
   <select name="wqo_front_order">
       <option value="ASC" <?php if ($_POST['wqo_front_order']=='ASC'):?> selected="selected"<?php endif;?>>ASC</option>
-      <option value="DESC" <?php if ($_POST['wqo_front_order']=='DESC'):?> selected="selected"<?php endif;?>>DESC</option>                
+      <option value="DESC" <?php if ($_POST['wqo_front_order']=='DESC'):?> selected="selected"<?php endif;?>>DESC</option>
   </select>
 
   <input type="hidden" value="1" name="wqo_hval" />
   <input type="submit" class="wqo_search" name="wqo_btn_search" value="Search"/>
-</form> <br /> 
+</form> <br />
   <?php
-  
-  
-  $cart_url = $woocommerce->cart->get_cart_url();  
+
+
+  $cart_url = $woocommerce->cart->get_cart_url();
   ?>
 <div class="span4 alertAdd" style="opacity: 1; display: block;">
   <div class="alert alert-info"id="wqo_alert_info" style="display: none;"> Added to your cart </div>
 </div>
 <div id="wqo_cart_amount" class="wqo_cart_amount" onClick="testing();">
-  <a href="<?php echo$cart_url;?>"><div id="wqo_cart_price" class="wqo_cart_price"><?php echo $woocommerce->cart->get_cart_total(); ?></div></a>  
+  <a href="<?php echo$cart_url;?>"><div id="wqo_cart_price" class="wqo_cart_price"><?php echo $woocommerce->cart->get_cart_total(); ?></div></a>
 </div>
-<script>  
+<script>
   //jQuery('#dropdown_product_cat option[value=]').text('All products');
   function wqo_add_prod(pid,vid){
     var qty= jQuery('#product_qty_'+vid).val();
     if(qty==0){
       jQuery('#wqo_alert_info').text('Out of Stock');
       jQuery('#wqo_alert_info').show()
-      setTimeout(function(){jQuery('#wqo_alert_info').hide()}, 1500);      
+      setTimeout(function(){jQuery('#wqo_alert_info').hide()}, 1500);
       return false;
     }
     if(vid==0){
       qty= jQuery('#product_qty_'+pid).val();
     }
-    
+
     var ajax_url = '<?php echo admin_url( 'admin-ajax.php' ); ?>';
         jQuery.ajax({
           type: "POST",
@@ -130,24 +130,24 @@ function wqo_product() {
                   'wqo_prod_var_id': vid,
                   'wqo_prod_qty':    qty
           },
-          success: function(response){            
+          success: function(response){
             if(response==1){
               jQuery('#wqo_alert_info').text('Added to your cart');
             }else{
               jQuery('#wqo_alert_info').text(response);
             }
-            
+
             jQuery.ajax({
               type: "POST",
               url:ajax_url,
               data : {'action': 'wqo_cart_amount'},
-              success: function(data){             
+              success: function(data){
                 jQuery('#wqo_cart_price').html(data);
               }
             });
-            
+
              jQuery('#wqo_alert_info').show()
-             setTimeout(function(){jQuery('#wqo_alert_info').hide()}, 2000);          
+             setTimeout(function(){jQuery('#wqo_alert_info').hide()}, 2000);
           }
         });
   }
@@ -155,7 +155,7 @@ function wqo_product() {
     jQuery(".ajax").colorbox();
   });
   var plugin_url='<? echo plugins_url(); ?>/woo-quick-order/includes/wqo-popup-data.php';
-</script>  
+</script>
 <?php
   $ordby='date';
   $ord='DESC';
@@ -165,7 +165,7 @@ function wqo_product() {
   }
 
   if(isset($_POST['wqo_hval']) && $_POST['product_cat']!=''){
-    
+
     $category_id = get_cat_ID($_POST['wqo_front_category']);
     $args = array(
 			'post_type'				=> 'product',
@@ -191,7 +191,7 @@ function wqo_product() {
           )
 		    )
 		);
-    
+
   }else{
     $args = array(
         'post_status'         => 'publish',
@@ -204,88 +204,124 @@ function wqo_product() {
    );
   }
 
-    $loop = new WP_Query( $args );
-    
-      if ($loop->have_posts()){
-        echo '<table><tr><th>Name</th><th>Image</th><th>Price</th><th>Quantity</th><th></th></tr>';
-        foreach($loop->posts as $val){
-            $variation_display=false;
-            $variation=false;
-            if (get_option('wqo_display_variation')=='1'){
-              $variation_display= true;
-            }            
-            
-            if ($variation_display == true){
-                $variation_query = new WP_Query();
-                $args_variation = array(
-                  'post_status' => 'publish',
-                  'post_type' => 'product_variation',
-                  'post_parent' => $val->ID
-                );                
-                $variation_query->query($args_variation);
+  // Get all product categories
 
-                if ($variation_query->have_posts()){
-                  $variation=true;
+    $product_categories = get_terms( 'product_cat' );
+    $list_products = array();
+    foreach ( $product_categories as $product_category )
+    {
+        // Get Category thumbnail
+        $thumbnail_id = get_woocommerce_term_meta( $product_category->term_id, 'thumbnail_id', true );
+        $image = wp_get_attachment_url( $thumbnail_id );
+        $list_products[] = array(
+            'category_id' => $product_category->term_id,
+            'name'        => $product_category->name,
+            'slug'        => $product_category->slug,
+            'thumbnail'   =>  $image ? $image : '',
+        );
+    }
+
+    echo '<table><tr><th>Name</th><th>Image</th><th>Price</th><th>Quantity</th><th></th></tr>';
+
+    foreach ( $list_products as $product_informaion )
+    {
+        echo '<tr><td><h4><strong>Category: ' . $product_informaion['name'] . '</strong></h4></td>';
+        if ( $product_informaion['thumbnail'] )
+        {
+            echo '<td><img src="'. $product_informaion['thumbnail'] .'" height="' . $wqo_img_size . '" width="' . $wqo_img_size . '" /></td>';
+        }
+        echo '</tr>';
+
+        $args['product_cat'] = $product_informaion['slug'];
+        $args['orderby'] = 'title';
+        $args['order']  = 'ASC';
+
+        $loop = new WP_Query( $args );
+
+        if ($loop->have_posts()){
+            foreach($loop->posts as $val){
+                $variation_display=false;
+                $variation=false;
+                if (get_option('wqo_display_variation')=='1'){
+                    $variation_display= true;
                 }
-            }
-                                  
-            if($variation==true){
-              $product_name_org=$val->post_title;
-              $product_url = get_permalink($val->ID);
-              
-              foreach($variation_query->posts as $var_data){
-                 $product = WC_Product_Factory::get_product($var_data->ID);
-                 $max_stock=500;                                  
-                 if($product->variation_has_stock==1){
-                   //$max_stock=$product->total_stock;
-                   $max_stock=$product->get_stock_quantity();
-                 }
-                 $availability=$product->get_availability();
-                  if($availability['class']=='out-of-stock'){
-                    $max_stock=0;
-                  }
-                 
-                  $prod_att=woocommerce_get_formatted_variation($product->get_variation_attributes(),true);                  
-                  $product_name='<a href="'. plugins_url().'/woo-quick-order/includes/wqo-popup-data.php?pid='.$var_data->ID.'" class="ajax">'.$product_name_org.'('.$prod_att.')</a>';
-                  $product_price=woocommerce_price($product->get_price());
-                  $img_url = WQO_BASE_URL. '/images/placeholder.png';
-                  if (has_post_thumbnail($var_data->ID)){
-                    $img_url2 = wp_get_attachment_url( get_post_thumbnail_id($var_data->ID) );                    
-                    $thumb = wp_get_attachment_image_src( get_post_thumbnail_id($var_data->ID), 'thumbnail' );
-                    $img_url = $thumb['0'];
-                    
-                  } else if (has_post_thumbnail($val->ID)){
-                    $img_url2 = wp_get_attachment_url( get_post_thumbnail_id($val->ID) );                    
-                    $thumb = wp_get_attachment_image_src( get_post_thumbnail_id($val->ID), 'thumbnail' );
-                    $img_url = $thumb['0'];                   
-                  }
-                  
-                  if (get_option('wqo_display_image_preview')=='1'){
-                  echo '<tr><td>'.$product_name.'</td><td><a href="'.$img_url2.'" class="preview"><img src="'.$img_url.'" height="'.$wqo_img_size.'" width="'.$wqo_img_size.'" /></a></td><td>'.$product_price.'</td>';
-                  }else{
-                    echo '<tr><td>'.$product_name.'</td><td><img src="'.$img_url.'" height="'.$wqo_img_size.'" width="'.$wqo_img_size.'" /></td><td>'.$product_price.'</td>';
-                  }                  
-                  ?>
-                    <td>
-                                                                   
-                        <?php
-                        if($max_stock!=0){                            
-                          ?><input type="number" style="width:70px;" value="1" min="1"  max="<?php echo $max_stock;?>" name="product_qty_<?php echo $var_data->ID?>" id="product_qty_<?php echo $var_data->ID?>" /><?php                            
-                        }else{                            
-                           ?><input type="number" style="width:70px;" value="0" min="0" max="0" name="product_qty_<?php echo $var_data->ID?>" id="product_qty_<?php echo $var_data->ID?>" /><?php
+
+                if ($variation_display == true){
+                    $variation_query = new WP_Query();
+                    $args_variation = array(
+                        'post_status' => 'publish',
+                        'post_type' => 'product_variation',
+                        'post_parent' => $val->ID
+                    );
+                    $variation_query->query($args_variation);
+
+                    if ($variation_query->have_posts()){
+                        $variation=true;
+                    }
+                }
+
+                if($variation==true){
+                    $product_name_org=$val->post_title;
+                    $product_url = get_permalink($val->ID);
+
+                    foreach($variation_query->posts as $var_data){
+                        $product = WC_Product_Factory::get_product($var_data->ID);
+                        $max_stock=500;
+                        if($product->variation_has_stock==1){
+                            //$max_stock=$product->total_stock;
+                            $max_stock=$product->get_stock_quantity();
+                        }
+                        $availability=$product->get_availability();
+                        if($availability['class']=='out-of-stock'){
+                            $max_stock=0;
+                        }
+
+                        $prod_att=woocommerce_get_formatted_variation($product->get_variation_attributes(),true);
+                        $product_name='<a href="'. plugins_url().'/woo-quick-order/includes/wqo-popup-data.php?pid='.$var_data->ID.'" class="ajax">'.$product_name_org.'('.$prod_att.')</a>';
+                        $product_price=woocommerce_price($product->get_price());
+                        $img_url = WQO_BASE_URL. '/images/placeholder.png';
+                        if (has_post_thumbnail($var_data->ID)){
+                            $img_url2 = wp_get_attachment_url( get_post_thumbnail_id($var_data->ID) );
+                            $thumb = wp_get_attachment_image_src( get_post_thumbnail_id($var_data->ID), 'thumbnail' );
+                            $img_url = $thumb['0'];
+
+                        } else if (has_post_thumbnail($val->ID)){
+                            $img_url2 = wp_get_attachment_url( get_post_thumbnail_id($val->ID) );
+                            $thumb = wp_get_attachment_image_src( get_post_thumbnail_id($val->ID), 'thumbnail' );
+                            $img_url = $thumb['0'];
+                        }
+                        if (get_option('wqo_display_image_preview')=='1'){
+                            echo '<tr><td>'.$product_name.'</td><td><a href="'.$img_url2.'" class="preview"><img src="'.$img_url.'" height="'.$wqo_img_size.'" width="'.$wqo_img_size.'" /></a></td><td>'.$product_price.'</td>';
+                        }else{
+                            echo '<tr><td>'.$product_name.'</td><td><img src="'.$img_url.'" height="'.$wqo_img_size.'" width="'.$wqo_img_size.'" /></td><td>'.$product_price.'</td>';
                         }
                         ?>
-                      
-                    </td>  
-                  <?php
-                  echo '<td><div class="wqo_add_btn"><a onclick="wqo_add_prod('.$val->ID.','.$var_data->ID.');"><div class="wqo_add_cart"></div></a></div></td></tr>';
-              }              
-            }else{
-                wqo_show_prod($val->ID,$wqo_img_size, $val->post_title);
-            }
-        }//end foreach
-          echo '</table>';
-      }//if  
+                        <td>
+
+                            <?php
+                            if($max_stock!=0){
+                                ?><input type="number" style="width:70px;" value="1" min="1"  max="<?php echo $max_stock;?>" name="product_qty_<?php echo $var_data->ID?>" id="product_qty_<?php echo $var_data->ID?>" /><?php
+                            }else{
+                                ?><input type="number" style="width:70px;" value="0" min="0" max="0" name="product_qty_<?php echo $var_data->ID?>" id="product_qty_<?php echo $var_data->ID?>" /><?php
+                            }
+                            ?>
+
+                        </td>
+                        <?php
+                        echo '<td><div class="wqo_add_btn"><a onclick="wqo_add_prod('.$val->ID.','.$var_data->ID.');"><div class="wqo_add_cart"></div></a></div></td></tr>';
+                    }
+                }else{
+                    wqo_show_prod($val->ID,$wqo_img_size, $val->post_title);
+                }
+            }//end foreach
+
+        }//if
+
+        wp_reset_postdata();
+
+    }
+
+    echo '</table>';
 }
 
 function wqo_show_prod($id, $wqo_img_size, $post_title){
